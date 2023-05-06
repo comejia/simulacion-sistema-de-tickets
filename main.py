@@ -68,7 +68,7 @@ def sistema_de_tickets():
     simulacion = Simulacion(4, 2)
     variables_de_sistema = simulacion.get_variables_sistema()
 
-    print('VARIABLES DE SISTEMA')
+    print('VARIABLES DE SISTEMA INICIAL')
     print(variables_de_sistema)
 
     while True:
@@ -80,7 +80,7 @@ def sistema_de_tickets():
             rutina_salida(simulacion, variables_de_sistema, indice_menor_tps)
 
         if variables_de_sistema["T"] <= simulacion.get_tiempo_simulacion():
-            continue
+            continue # asi como esta rompe. Usar break para pruebas basicas
         else:
             if variables_de_sistema["NS"] == 0:
                 break
@@ -88,7 +88,6 @@ def sistema_de_tickets():
                 variables_de_sistema["TPLL"] = simulacion.get_high_value()
                 continue
 
-    print('FINAL SIMULACION')
     imprimir_resultados(simulacion, variables_de_sistema, indice_menor_tps)
 
 
@@ -148,6 +147,8 @@ def rutina_salida(simulacion, variables, indice):
 
 
 def imprimir_resultados(simulacion, variables, indice):
+    print('FINAL SIMULACION')
+    print('VARIABLES DE SISTEMA FINAL')
     print(variables)
 
 
