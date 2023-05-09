@@ -77,11 +77,11 @@ def rutina_salida(simulacion, variables, indice_menor_tps):
 
     variables["T"] = variables["TPS"][indice_menor_tps]
 
-    simulacion.acumular_sts(variables, variables["seniorities"][indice_menor_tps][1], variables["T"])
+    simulacion.acumular_sts(variables, variables["seniorities"][indice_menor_tps][1], variables["TPS"][indice_menor_tps])
 
     simulacion.calculo_de_prioridad_salida(variables, variables["seniorities"][indice_menor_tps][1])
 
-    if variables["NSA"] + variables["NSM"] + variables["NSB"] <= simulacion.get_total_puestos():
+    if variables["NSA"] + variables["NSM"] + variables["NSB"] >= simulacion.get_total_puestos():
         if simulacion.es_junior(variables["seniorities"], indice_menor_tps):
             atiende_junior(simulacion, variables, indice_menor_tps, variables["seniorities"][indice_menor_tps][1])
         else:
