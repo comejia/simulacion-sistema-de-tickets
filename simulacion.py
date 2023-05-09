@@ -5,7 +5,7 @@ import random
 
 class Simulacion:
     HIGH_VALUE = 999999999999
-    TIEMPO_SIMULACION = 1 * 24 * 60 * 60
+    TIEMPO_SIMULACION = 365 * 24 * 60 * 60
 
     def __init__(self, var_control_junior, var_control_senior, tiempo_simulacion=TIEMPO_SIMULACION):
         self.juniors = var_control_junior
@@ -62,10 +62,10 @@ class Simulacion:
         # seniorities.append(jr)
 
         for i in range(seniors):
-            seniorities.append(('senior', "none"))
+            seniorities.append(('senior', 0))
 
         for i in range(juniors):
-            seniorities.append(('junior', "none"))
+            seniorities.append(('junior', 0))
 
         return seniorities
 
@@ -104,7 +104,7 @@ class Simulacion:
 
     def get_intervalo_entre_arribos(self):
         num = round(random.uniform(0.0001, 0.9999), 4)
-        return -4489.54*math.log(1.0-num) # -4489,54*log(1-x)
+        return -4489.54 * math.log(1.0 - num)  # -4489,54*log(1-x)
 
     def es_junior(self, seniorities: list, indice) -> bool:
         return seniorities[indice][0] == "junior"
@@ -112,12 +112,12 @@ class Simulacion:
     def generar_tiempo_resolucion_jr(self):
         num = round(random.uniform(0.0001, 0.9999), 4)
         # math.pow((1-num), 1.3368805)
-        return 9000/(math.pow(1-num, 1.336880522987661)) # 9000/((1-x)^(1.3368805))
+        return 9000 / (math.pow(1 - num, 1.336880522987661))  # 9000/((1-x)^(1.3368805))
 
     def generar_tiempo_resolucion_sr(self):
         num = round(random.uniform(0.0001, 0.9999), 4)
         # -3945.5 ( -0.313522 - 1 ( -1 log(1 - 1 x ) )^0.5733616191732126 )
-        return -3945.5*(-0.313522 - math.pow(-1*math.log(1 - num), 0.5733616191732126))
+        return -3945.5 * (-0.313522 - math.pow(-1 * math.log(1 - num), 0.5733616191732126))
 
     def acumular_sta(self, variables, prioridad, tiempo_resolucion):
         if prioridad == "ALTA":
@@ -146,7 +146,6 @@ class Simulacion:
             variables["NSB"] = variables["NSB"] - 1
             return "BAJA"
 
-
         # if prioridad == "ALTA":
         #     variables["NSA"] = variables["NSA"] - 1
         # elif prioridad == "MEDIA":
@@ -167,7 +166,9 @@ class Simulacion:
         return self.seniors
 
     def get_puesto_libre(self, tps: list):
-        return tps.index(self.HIGH_VALUE)
+        # list_random = tps.copy()
+        # random.shuffle(list_random)
+        return list_random.index(self.HIGH_VALUE)
 
     def calcular_resultados(self, variables):
         for index, pto in enumerate(variables["PTO"]):
@@ -176,4 +177,3 @@ class Simulacion:
         variables["PECA"] = (variables["STSA"] - variables["STLLA"]) / variables["NT"]
         variables["PECM"] = (variables["STSM"] - variables["STLLM"]) / variables["NT"]
         variables["PECB"] = (variables["STSB"] - variables["STLLB"]) / variables["NT"]
-

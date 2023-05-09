@@ -4,7 +4,7 @@ from simulacion import Simulacion
 def sistema_de_tickets():
     print('INICIO DE SIMULACION')
 
-    simulacion = Simulacion(10, 2)
+    simulacion = Simulacion(3, 1)
     variables_de_sistema = simulacion.get_variables_sistema()
 
     print('VARIABLES DE SISTEMA INICIAL')
@@ -56,6 +56,9 @@ def rutina_llegada(simulacion, variables, indice_menor_tps):
 def atiende_junior(simulacion, variables, indice_menor_tps, prioridad):
     print("ATIENDE JUNIOR")
 
+    variables["seniorities"][indice_menor_tps] = (variables["seniorities"][indice_menor_tps][0], variables["seniorities"][indice_menor_tps][1] + 1)
+
+
     # variables["seniorities"][indice_menor_tps] = (variables["seniorities"][indice_menor_tps][0], prioridad)
     tiempo_resolucion_jr = simulacion.generar_tiempo_resolucion_jr()
     variables["TPS"][indice_menor_tps] = variables["T"] + tiempo_resolucion_jr
@@ -65,6 +68,10 @@ def atiende_junior(simulacion, variables, indice_menor_tps, prioridad):
 
 def atiende_senior(simulacion, variables, indice_menor_tps, prioridad):
     print("ATIENDE SENIOR")
+
+
+    variables["seniorities"][indice_menor_tps] = (variables["seniorities"][indice_menor_tps][0], variables["seniorities"][indice_menor_tps][1] + 1)
+
 
     # variables["seniorities"][indice_menor_tps] = (variables["seniorities"][indice_menor_tps][0], prioridad)
     tiempo_resolucion_sr = simulacion.generar_tiempo_resolucion_sr()
