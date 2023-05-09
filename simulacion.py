@@ -13,11 +13,11 @@ class Simulacion:
         self.tiempo_simulacion = tiempo_simulacion
 
     def get_variables_sistema(self) -> dict:
-        return {
+        variables = {
             "T": 0,
             "TPLL": 0,
 
-            "TPS": [self.HIGH_VALUE] * self.get_total_puestos(),
+            # "TPS": [self.HIGH_VALUE] * self.get_total_puestos(),
 
             "STLLA": 0,
             "STLLM": 0,
@@ -36,9 +36,9 @@ class Simulacion:
             "NTM": 0,
             "NTB": 0,
 
-            "PTO": [0] * self.get_total_puestos(),
-            "STO": [0] * self.get_total_puestos(),
-            "ITO": [0] * self.get_total_puestos(),
+            # "PTO": [0] * self.get_total_puestos(),
+            # "STO": [0] * self.get_total_puestos(),
+            # "ITO": [0] * self.get_total_puestos(),
 
             "NSA": 0,
             "NSM": 0,
@@ -48,36 +48,53 @@ class Simulacion:
             "PECM": 0,
             "PECB": 0,
 
-            "seniorities": self.crear_seniorities(self.seniors, self.juniors)
+            # "seniorities": self.crear_seniorities(self.seniors, self.juniors),
+
+            "devs": [dict()] * self.get_total_puestos()
         }
+        self.crear_seniorities(variables, self.seniors, self.juniors)
+        return variables
 
     def get_total_puestos(self):
         return self.juniors + self.seniors
 
-    def crear_seniorities(self, seniors, juniors) -> list:
-        # sr = [('senior', "none")] * seniors
-        # jr = [('junior', "none")] * juniors
-        seniorities = list()
-        # seniorities.append(sr)
-        # seniorities.append(jr)
+    def crear_seniorities(self, variables, seniors, juniors):  # -> list:
 
-        for i in range(seniors):
-            seniorities.append(('senior', 0))
+        # seniorities = list()
 
-        for i in range(juniors):
-            seniorities.append(('junior', 0))
+        for i in range(seniors + juniors):
+            variables["devs"][i] = {
+                "TPS": self.HIGH_VALUE,
+                "PTO": 0,
+                "STO": 0,
+                "ITO": 0,
+                "seniority": "",
+                "atendidos": 0
+            }
 
-        return seniorities
+        for i in range(seniors + juniors):
+            if i < seniors:
+                variables["devs"][i]["seniority"] = 'senior'
+            else:
+                variables["devs"][i]["seniority"] = 'junior'
+            # seniorities.append(('senior', 0))
 
-    def get_menor_tps(self, proximas_salidas: list) -> int:
+        # for i in range(juniors):
+        #     variables["devs"][i]["seniority"] = ('junior', 0)
+        #     # seniorities.append(('junior', 0))
+
+        # return seniorities
+
+    def get_menor_tps(self, devs: list) -> int:
         # try:
         #     return proximas_salidas.index(self.HIGH_VALUE)
         # except:
         #     min_value = min(proximas_salidas)
         #     return proximas_salidas.index(min_value)
 
-        min_value = min(proximas_salidas)
-        return proximas_salidas.index(min_value)
+        tps = list(map(lambda dev: dev["TPS"], devs))
+        min_value = min(tps)
+        return tps.index(min_value)
 
     def get_calculo_de_prioridad(self, variables_sistema):
         num = round(random.random(), ndigits=4)
@@ -106,8 +123,8 @@ class Simulacion:
         num = round(random.uniform(0.0001, 0.9999), 4)
         return -4489.54 * math.log(1.0 - num)  # -4489,54*log(1-x)
 
-    def es_junior(self, seniorities: list, indice) -> bool:
-        return seniorities[indice][0] == "junior"
+    def es_junior(self, devs: list, indice) -> bool:
+        return devs[indice]['seniority'] == "junior"
 
     def generar_tiempo_resolucion_jr(self):
         num = round(random.uniform(0.0001, 0.9999), 4)
@@ -165,14 +182,15 @@ class Simulacion:
     def get_seniors(self):
         return self.seniors
 
-    def get_puesto_libre(self, tps: list):
-        # list_random = tps.copy()
-        # random.shuffle(list_random)
-        return list_random.index(self.HIGH_VALUE)
+    def get_puesto_libre(self, devs: list):
+        # list_random = devs.copy()
+        random.shuffle(devs)
+        tps = list(map(lambda dev: dev["TPS"], devs))
+        return tps.index(self.HIGH_VALUE)
 
     def calcular_resultados(self, variables):
-        for index, pto in enumerate(variables["PTO"]):
-            variables["PTO"][index] = (variables["STO"][index] / variables["T"]) * 100
+        for index in range(self.get_total_puestos()):
+            variables["devs"][index]["PTO"] = (variables["devs"][index]["STO"] / variables["T"]) * 100
 
         variables["PECA"] = (variables["STSA"] - variables["STLLA"]) / variables["NT"]
         variables["PECM"] = (variables["STSM"] - variables["STLLM"]) / variables["NT"]
