@@ -13,7 +13,7 @@ def sistema_de_tickets():
     while True:
         indice_menor_tps = simulacion.get_menor_tps(variables_de_sistema["TPS"])
 
-        if variables_de_sistema["TPLL"] <= variables_de_sistema["TPS"][indice_menor_tps]:
+        if variables_de_sistema["TPLL"] < variables_de_sistema["TPS"][indice_menor_tps]:
             rutina_llegada(simulacion, variables_de_sistema, indice_menor_tps)
         else:
             rutina_salida(simulacion, variables_de_sistema, indice_menor_tps)
@@ -55,7 +55,7 @@ def rutina_llegada(simulacion, variables, indice_menor_tps):
 def atiende_junior(simulacion, variables, indice_menor_tps, prioridad):
     print("ATIENDE JUNIOR")
 
-    variables["seniorities"][indice_menor_tps] = (variables["seniorities"][indice_menor_tps][0], prioridad)
+    # variables["seniorities"][indice_menor_tps] = (variables["seniorities"][indice_menor_tps][0], prioridad)
     tiempo_resolucion_jr = simulacion.generar_tiempo_resolucion_jr()
     variables["TPS"][indice_menor_tps] = variables["T"] + tiempo_resolucion_jr
 
@@ -65,7 +65,7 @@ def atiende_junior(simulacion, variables, indice_menor_tps, prioridad):
 def atiende_senior(simulacion, variables, indice_menor_tps, prioridad):
     print("ATIENDE SENIOR")
 
-    variables["seniorities"][indice_menor_tps] = (variables["seniorities"][indice_menor_tps][0], prioridad)
+    # variables["seniorities"][indice_menor_tps] = (variables["seniorities"][indice_menor_tps][0], prioridad)
     tiempo_resolucion_sr = simulacion.generar_tiempo_resolucion_sr()
     variables["TPS"][indice_menor_tps] = variables["T"] + tiempo_resolucion_sr
 
@@ -77,15 +77,15 @@ def rutina_salida(simulacion, variables, indice_menor_tps):
 
     variables["T"] = variables["TPS"][indice_menor_tps]
 
-    simulacion.acumular_sts(variables, variables["seniorities"][indice_menor_tps][1], variables["TPS"][indice_menor_tps])
+    prioridad_salida = simulacion.calculo_de_prioridad_salida(variables, variables["seniorities"][indice_menor_tps][1])
 
-    simulacion.calculo_de_prioridad_salida(variables, variables["seniorities"][indice_menor_tps][1])
+    simulacion.acumular_sts(variables, prioridad_salida, variables["TPS"][indice_menor_tps])
 
     if variables["NSA"] + variables["NSM"] + variables["NSB"] >= simulacion.get_total_puestos():
         if simulacion.es_junior(variables["seniorities"], indice_menor_tps):
-            atiende_junior(simulacion, variables, indice_menor_tps, variables["seniorities"][indice_menor_tps][1])
+            atiende_junior(simulacion, variables, indice_menor_tps, prioridad_salida)
         else:
-            atiende_senior(simulacion, variables, indice_menor_tps, variables["seniorities"][indice_menor_tps][1])
+            atiende_senior(simulacion, variables, indice_menor_tps, prioridad_salida)
     else:
         variables["ITO"][indice_menor_tps] = variables["T"]
         variables["TPS"][indice_menor_tps] = simulacion.get_high_value()

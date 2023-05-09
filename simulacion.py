@@ -127,12 +127,23 @@ class Simulacion:
             variables["STSB"] = variables["STSB"] + tiempo
 
     def calculo_de_prioridad_salida(self, variables, prioridad):
-        if prioridad == "ALTA":
+        if variables["NSA"] >= 1:
             variables["NSA"] = variables["NSA"] - 1
-        elif prioridad == "MEDIA":
+            return "ALTA"
+        elif variables["NSM"] >= 1:
             variables["NSM"] = variables["NSM"] - 1
+            return "MEDIA"
         else:
             variables["NSB"] = variables["NSB"] - 1
+            return "BAJA"
+
+
+        # if prioridad == "ALTA":
+        #     variables["NSA"] = variables["NSA"] - 1
+        # elif prioridad == "MEDIA":
+        #     variables["NSM"] = variables["NSM"] - 1
+        # else:
+        #     variables["NSB"] = variables["NSB"] - 1
 
     def get_high_value(self):
         return self.HIGH_VALUE
