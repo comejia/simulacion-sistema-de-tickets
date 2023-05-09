@@ -1,65 +1,4 @@
-
-class Simulacion:
-    HIGH_VALUE = 999999999999
-
-    def __init__(self, var_control_junior, var_control_senior, tiempo_simulacion=365 * 24 * 60):
-        self.juniors = var_control_junior
-        self.seniors = var_control_senior
-        self.tiempo_simulacion = tiempo_simulacion
-
-    def get_variables_sistema(self) -> dict:
-        return {
-            "T": 0,
-            "TPLL": 0,
-            "TPS": [self.HIGH_VALUE] * self.get_total_puestos(),
-            "STLL": 0,
-            "STS": 0,
-            "STA": 0,
-            "NT": 0,
-            "NS": 0,
-            "PTO": [0] * self.get_total_puestos(),
-            "STO": [0] * self.get_total_puestos(),
-            "ITO": [0] * self.get_total_puestos(),
-
-            "NSA": 0,
-            "NSM": 0,
-            "NSB": 0,
-
-            "seniorities": self.crear_seniorities(self.seniors, self.juniors)
-        }
-
-    def get_total_puestos(self):
-        return self.juniors + self.seniors
-
-    def crear_seniorities(self, seniors, juniors) -> list:
-        seniorities = [('senior', False)] * seniors
-        seniorities.append([('junior', False)] * juniors)
-        return seniorities
-
-    def get_indice_menor_tps(self, proximas_salidas: list) -> int: # no entendi la rutina en grafico
-        min_value = min(proximas_salidas)
-        return proximas_salidas.index(min_value)
-
-    def get_tiempo_proxima_llegada(self) -> int:
-        return 20
-
-    def get_prioridad_ticket(self, variables_sistema: dict):
-        pass
-
-    def es_junior(self, seniorities: list, indice) -> bool:
-        return seniorities[indice][0] == "junior"
-
-    def generar_tiempo_resolucion_jr(self) -> int:
-        return 10
-
-    def generar_tiempo_resolucion_sr(self) -> int:
-        return 2
-
-    def get_high_value(self):
-        return self.HIGH_VALUE
-
-    def get_tiempo_simulacion(self):
-        return self.tiempo_simulacion
+from simulacion import Simulacion
 
 
 def sistema_de_tickets():
@@ -72,7 +11,7 @@ def sistema_de_tickets():
     print(variables_de_sistema)
 
     while True:
-        indice_menor_tps = simulacion.get_indice_menor_tps(variables_de_sistema["TPS"]) # corregir
+        indice_menor_tps = simulacion.get_menor_tps(variables_de_sistema["TPS"])
 
         if variables_de_sistema["TPLL"] <= variables_de_sistema["TPS"][indice_menor_tps]:
             rutina_llegada(simulacion, variables_de_sistema, indice_menor_tps)
@@ -80,9 +19,9 @@ def sistema_de_tickets():
             rutina_salida(simulacion, variables_de_sistema, indice_menor_tps)
 
         if variables_de_sistema["T"] <= simulacion.get_tiempo_simulacion():
-            continue # asi como esta rompe. Usar break para pruebas basicas
+            continue
         else:
-            if variables_de_sistema["NS"] == 0:
+            if variables_de_sistema["NSA"] + variables_de_sistema["NSM"] + variables_de_sistema["NSB"] == 0:
                 break
             else:
                 variables_de_sistema["TPLL"] = simulacion.get_high_value()
@@ -91,65 +30,84 @@ def sistema_de_tickets():
     imprimir_resultados(simulacion, variables_de_sistema, indice_menor_tps)
 
 
-def rutina_llegada(simulacion, variables, indice):
+def rutina_llegada(simulacion, variables, indice_menor_tps):
     print("RUTINA LLEGADA")
     variables["T"] = variables["TPLL"]
-    variables["STLL"] = variables["STLL"] + variables["T"]
 
-    proxima_llegada = simulacion.get_tiempo_proxima_llegada()
+    prioridad_ticket = simulacion.get_calculo_de_prioridad(variables)
 
-    variables["TPLL"] = variables["T"] + proxima_llegada
-    variables["NS"] = variables["NS"] + 1
+    simulacion.acumular_stll(variables, prioridad_ticket)
 
-    prioridad_ticket = simulacion.get_prioridad_ticket(variables)
+    ia = simulacion.get_intervalo_entre_arribos()
+
+    variables["TPLL"] = variables["T"] + ia
+    variables["NT"] = variables["NT"] + 1
 
     if variables["NSA"] + variables["NSM"] + variables["NSB"] <= simulacion.get_total_puestos():
-        if simulacion.es_junior(variables["seniorities"], indice):
-            variables["STO"][indice] = variables["STO"][indice] + (variables["T"] - variables["ITO"][indice]) # validar esto en grafico
-            atiende_junior(simulacion, variables, indice)
+        if simulacion.es_junior(variables["seniorities"], indice_menor_tps):
+            atiende_junior(simulacion, variables, indice_menor_tps, prioridad_ticket)
         else:
-            atiende_senior(simulacion, variables, indice)
+            atiende_senior(simulacion, variables, indice_menor_tps, prioridad_ticket)
 
-        variables["STO"][indice] = variables["STO"][indice] + (variables["T"] - variables["ITO"][indice])
+        variables["STO"][indice_menor_tps] = variables["STO"][indice_menor_tps] + (variables["T"] - variables["ITO"][indice_menor_tps])
 
 
-def atiende_junior(simulacion, variables, indice):
+def atiende_junior(simulacion, variables, indice_menor_tps, prioridad):
     print("ATIENDE JUNIOR")
 
+    variables["seniorities"][indice_menor_tps] = (variables["seniorities"][indice_menor_tps][0], prioridad)
     tiempo_resolucion_jr = simulacion.generar_tiempo_resolucion_jr()
-    variables["TPS"][indice] = variables["TPS"][indice] + tiempo_resolucion_jr # en grafico usa otro indice (j), que seria?
-    variables["STA"] = variables["STA"] + tiempo_resolucion_jr
+    variables["TPS"][indice_menor_tps] = variables["T"] + tiempo_resolucion_jr
+
+    simulacion.acumular_sta(variables, prioridad, tiempo_resolucion_jr)
 
 
-def atiende_senior(simulacion, variables, indice):
+def atiende_senior(simulacion, variables, indice_menor_tps, prioridad):
     print("ATIENDE SENIOR")
 
+    variables["seniorities"][indice_menor_tps] = (variables["seniorities"][indice_menor_tps][0], prioridad)
     tiempo_resolucion_sr = simulacion.generar_tiempo_resolucion_sr()
-    variables["TPS"][indice] = variables["TPS"][indice] + tiempo_resolucion_sr
-    variables["STA"] = variables["STA"] + tiempo_resolucion_sr
+    variables["TPS"][indice_menor_tps] = variables["T"] + tiempo_resolucion_sr
+
+    simulacion.acumular_sta(variables, prioridad, tiempo_resolucion_sr)
 
 
-def rutina_salida(simulacion, variables, indice):
+def rutina_salida(simulacion, variables, indice_menor_tps):
     print("RUTINA SALIDA")
 
-    variables["T"] = variables["TPS"][indice]
-    variables["STS"] = variables["STS"] + variables["T"]
-    variables["NS"] = variables["NS"] + 1
+    variables["T"] = variables["TPS"][indice_menor_tps]
 
-    if variables["NSA"] + variables["NSM"] + variables["NSB"] >= simulacion.get_total_puestos():
-        if simulacion.es_junior(variables["seniorities"], indice):
-            atiende_junior(simulacion, variables, indice)
+    simulacion.acumular_sts(variables, variables["seniorities"][indice_menor_tps][1], variables["T"])
+
+    simulacion.calculo_de_prioridad_salida(variables, variables["seniorities"][indice_menor_tps][1])
+
+    if variables["NSA"] + variables["NSM"] + variables["NSB"] <= simulacion.get_total_puestos():
+        if simulacion.es_junior(variables["seniorities"], indice_menor_tps):
+            atiende_junior(simulacion, variables, indice_menor_tps, variables["seniorities"][indice_menor_tps][1])
         else:
-            atiende_senior(simulacion, variables, indice)
+            atiende_senior(simulacion, variables, indice_menor_tps, variables["seniorities"][indice_menor_tps][1])
     else:
-        variables["ITO"][indice] = variables["T"]
-        variables["TPS"][indice] = simulacion.get_high_value()
+        variables["ITO"][indice_menor_tps] = variables["T"]
+        variables["TPS"][indice_menor_tps] = simulacion.get_high_value()
 
 
 def imprimir_resultados(simulacion, variables, indice):
     print('FINAL SIMULACION')
     print('VARIABLES DE SISTEMA FINAL')
-    print(variables)
+    simulacion.calcular_resultados(variables)
+
+    print("=========================")
+    print("Porcentaje de tiempo ocioso")
+    print(variables["PTO"])
+
+    print("=========================")
+    print(f'Cantidad Junior: {simulacion.get_juniors()}')
+    print(f'Cantidad Senior: {simulacion.get_seniors()}')
+
+    print("=========================")
+    print(f'Promedio de espera en cola ALTA: {variables["PECA"]}')
+    print(f'Promedio de espera en cola MEDIA: {variables["PECM"]}')
+    print(f'Promedio de espera en cola BAJA: {variables["PECB"]}')
 
 
 if __name__ == '__main__':
